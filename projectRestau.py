@@ -2,8 +2,9 @@ from tkinter import *
 from tkinter import messagebox
 import os
 from datetime import datetime
+import subprocess
 
-class NWRestaurant:
+class Serveur:
     def __init__(self, master):
         self.master = master
         master.title("N&W Restaurant")
@@ -32,6 +33,10 @@ class NWRestaurant:
         self.factureLabel.grid(row=0, column=4, padx=20, pady=2)
         self.factureEntry = Entry(self.client_details, font=('arial', 15), bd=7)
         self.factureEntry.grid(row=0, column=5, padx=10)
+
+        self.logout_button = Button(master, text="Logout", font=('arial', 15), command=self.logout, bg='lightblue')
+        self.logout_button.grid(row=0, column=2, padx=10, pady=0)
+
 
         self.searchButton = Button(self.client_details, text="Search", font=('arial', 15), command=self.search_facture)
         self.searchButton.grid(row=0, column=6, padx=10, pady=8)
@@ -100,7 +105,7 @@ class NWRestaurant:
         self.PoissonsEntry = Entry(self.PlatsFrame, font=('times new roman', 15, 'bold'), width=10, bd=8)
         self.PoissonsEntry.grid(row=1, column=1)
 
-        # Pâtes
+        # Pates
         self.PatesLabel = Label(self.PlatsFrame, text="Pâtes", font=('times new roman', 15, 'bold'), fg='#000080',
                                 bg="#FFD1DC")
         self.PatesLabel.grid(row=2, column=0)
@@ -108,7 +113,7 @@ class NWRestaurant:
         self.PatesEntry = Entry(self.PlatsFrame, font=('times new roman', 15, 'bold'), width=10, bd=8)
         self.PatesEntry.grid(row=2, column=1)
 
-        # Plats végétariens
+        # Plats vgtrs
         self.VegetariensLabel = Label(self.PlatsFrame, text="Plats végétariens", font=('times new roman', 15, 'bold'),
                                     fg='#000080', bg="#FFD1DC")
         self.VegetariensLabel.grid(row=3, column=0)
@@ -122,7 +127,7 @@ class NWRestaurant:
                                         relief=GROOVE, bd=8, padx=20, bg="#FFD1DC")
         self.DessertsFrame.grid(row=0, column=2)
 
-        # Gâteaux
+        # gateaux
         self.GateauxLabel = Label(self.DessertsFrame, text="Gâteaux", font=('times new roman', 15, 'bold'), fg='#000080',
                                 bg="#FFD1DC")
         self.GateauxLabel.grid(row=0, column=0)
@@ -138,7 +143,7 @@ class NWRestaurant:
         self.TartesEntry = Entry(self.DessertsFrame, font=('times new roman', 15, 'bold'), width=10, bd=8)
         self.TartesEntry.grid(row=1, column=1)
 
-        # Crêpes et gaufres
+        # Crepes et gaufres
         self.CrepesLabel = Label(self.DessertsFrame, text="Crêpes et gaufres", font=('times new roman', 15, 'bold'),
                                 fg='#000080', bg="#FFD1DC")
         self.CrepesLabel.grid(row=2, column=0)
@@ -175,7 +180,7 @@ class NWRestaurant:
         self.PainsViennoiseriesEntry = Entry(self.PetitDejeunerFrame, font=('times new roman', 15, 'bold'), width=10, bd=8)
         self.PainsViennoiseriesEntry.grid(row=1, column=1)
 
-        # Céréales
+        # Cereals
         self.CerealesLabel = Label(self.PetitDejeunerFrame, text="Céréales", font=('times new roman', 15, 'bold'),
                                 fg='#000080', bg="#FFD1DC")
         self.CerealesLabel.grid(row=2, column=0)
@@ -206,7 +211,7 @@ class NWRestaurant:
         self.scroll.config(command=self.textarea.yview)
 
 
-        #Choix desoptions
+        #Choix des options
         self.FACTMenuFrame = LabelFrame(self.produitsFrame, text="Facture Menu", font=('times new roman', 15, 'bold'),
                                         fg='#000080', relief=GROOVE, bd=8, bg="#FFD1DC")
         self.FACTMenuFrame.grid(row=1, column=2, padx=10, pady=10, sticky="w")
@@ -224,6 +229,10 @@ class NWRestaurant:
         self.print_button = Button(self.FACTMenuFrame, text="Print Facture", font=('arial', 15),
                                     command=self.print_facture, bg='pink')
         self.print_button.pack(side=LEFT, padx=10, pady=10)
+
+        self.chef_button_frame = Frame(master, bg='pink')
+        self.chef_button_frame.grid(row=2, column=0, columnspan=3, pady=10)
+        self.create_chef_button()
 
         # Facture Variable
         self.CostofFood = StringVar()
@@ -400,8 +409,12 @@ class NWRestaurant:
             # Reinit du Texte recu
             self.txtReceipt.delete("1.0", END)
 
-            # Renit e textarea in FactureFrame
+            # Renite textarea in FactureFrame
             self.textarea.delete("1.0", END)
+
+    def logout(self):
+        self.master.destroy()
+        subprocess.run(["python", "main.py"])
 
     def search_facture(self):
         #Recup des donnes en util get
@@ -429,10 +442,58 @@ class NWRestaurant:
             # Pas trouver
             messagebox.showinfo("Facture Pas Trouvee", "La facture de ce client nexiste pas")
 
+    #ce qui doit etrre envoyer au chef 
+    def send_to_chef(self):
+        order_details = self.get_receipt_content_dish_quantity()
+
+
+        with open(os.path.join(os.path.dirname(__file__), "projetRestau.txt"), 'a') as file:
+            file.write(order_details )
+
+        messagebox.showinfo("Information", "Order sent to chef.")
+
+
+    #combien a tant commander
+    def get_receipt_content_dish_quantity(self):
+        item_quantities = [
+            ('Salade', self.SaladeEntry.get()),
+            ('Soupes', self.SoupesEntry.get()),
+            ('Assiettes', self.AssiettesEntry.get()),
+            ('Canapes', self.CanapesEntry.get()),
+            ('Viandes', self.ViandesEntry.get()),
+            ('Poissons', self.PoissonsEntry.get()),
+            ('Pates', self.PatesEntry.get()),
+            ('Vegetariens', self.VegetariensEntry.get()),
+            ('Gateaux', self.GateauxEntry.get()),
+            ('Tartes', self.TartesEntry.get()),
+            ('Crepes', self.CrepesEntry.get()),
+            ('Glaces', self.GlacesEntry.get()),
+            ('Croissants', self.CroissantsEntry.get()),
+            ('PainsViennoiseries', self.PainsViennoiseriesEntry.get()),
+            ('Cereales', self.CerealesEntry.get()),
+            ('OmelettesOeufs', self.OmelettesOeufsEntry.get()),
+        ]
+        receipt_content = ""
+
+        for item, quantity in item_quantities:
+            if quantity:
+                receipt_content += f"{item}: {quantity}\n"
+
+        return receipt_content
+
+    #envoyer la commande au chef 
+    def create_chef_button(self):
+        chef_button = Button(self.chef_button_frame, text="Send to Chef", font=('arial', 15),
+                            command=self.send_to_chef, bg='lightblue')  
+        chef_button.grid(row=0, column=0, padx=10, pady=10)
+
+
 def main():
     root = Tk()
-    app = NWRestaurant(root)
+    app = Serveur(root)
+    app.create_chef_button()  
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()
